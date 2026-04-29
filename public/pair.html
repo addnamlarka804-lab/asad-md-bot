@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASAD-MD V7.9 - Pair Device</title>
+<style>
+body{background:#0f0f0f;color:#fff;font-family:Arial;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px}
+.card{background:#1e1e1e;border:2px solid #00ff88;border-radius:20px;padding:30px;max-width:400px;width:100%;box-shadow:0 0 30px rgba(0,255,136,0.3)}
+h1{text-align:center;background:linear-gradient(90deg,#00ff88,#00aaff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:26px;margin:0 0 5px 0}
+.sub{text-align:center;color:#888;font-size:13px;margin-bottom:25px}
+.label{color:#00ff88;font-size:14px;margin-bottom:8px;display:block}
+.input{width:100%;background:#2a2a2a;border:1px solid #333;padding:14px;border-radius:10px;color:#fff;font-size:16px;margin-bottom:15px}
+.btn{width:100%;padding:15px;background:linear-gradient(90deg,#00ff88,#00aaff);border:none;border-radius:10px;color:#000;font-size:16px;font-weight:bold;cursor:pointer}
+.btn:disabled{opacity:0.5}
+.codebox{background:#0a0a0a;border:2px dashed #00ff88;padding:20px;border-radius:10px;text-align:center;margin:20px 0;display:none}
+.codebox.active{display:block}
+.codetext{font-size:30px;letter-spacing:6px;color:#00ff88;font-weight:bold;font-family:monospace}
+.inst{background:#2a2a2a;padding:12px;border-radius:10px;font-size:12px;line-height:1.6;color:#aaa;margin-top:15px}
+.footer{margin-top:20px;text-align:center;font-size:11px;color:#666;border-top:1px solid #333;padding-top:12px}
+.dot{display:inline-block;width:8px;height:8px;background:#00ff88;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.error{color:#ff4444;text-align:center;margin:10px 0;display:none}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>🤖 ASAD-MD V7.9</h1>
+<div class="sub">PUBLIC PAIR SYSTEM</div>
+
+<label class="label">📱 Koi Bhi Country Ka Number Dalain</label>
+<input type="text" class="input" id="phone" placeholder="923227753099">
+
+<div class="error" id="error"></div>
+
+<button class="btn" id="pairBtn" onclick="getPairCode()">🔗 GET PAIR CODE</button>
+
+<div class="codebox" id="codeBox">
+<div style="color:#00ff88;margin-bottom:8px;font-size:14px">✅ PAIR CODE READY</div>
+<div class="codetext" id="pairCode">--------</div>
+<div style="color:#888;font-size:12px;margin-top:8px" id="forNumber"></div>
+<button class="btn" style="margin-top:12px" onclick="copyCode()">📋 COPY CODE</button>
+</div>
+
+<div class="inst">
+👉 WhatsApp > Linked Devices<br>
+👉 Link with Phone Number<br>
+👉 Upar wala code dalain<br>
+⏰ Code expire: 3 minutes<br><br>
+✅ <b>Har number ka alag code</b><br>
+✅ <b>Pair hote hi WhatsApp pe msg aye ga</b>
+</div>
+
+<div class="footer">
+<span class="dot"></span> Status: Online 24/7 │ 👑 By Asad<br>
+📢 Channel: ASAD-MD OFFICIAL
+</div>
+</div>
+
+<script>
+async function getPairCode() {
+    const phone = document.getElementById('phone').value.replace(/[^0-9]/g, '')
+    const btn = document.getElementById('pairBtn')
+    const error = document.getElementById('error')
+
+    if (phone.length < 10) {
+        error.style.display = 'block'
+        error.innerText = '❌ Pura number dalain country code ke saath'
+        return
+    }
+
+    btn.disabled = true
+    btn.innerText = '⏳ Generating...'
+    error.style.display = 'none'
+
+    try {
+        const res = await fetch('/pair', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: phone })
+        })
+        const data = await res.json()
+
+        if (data.error) {
+            error.style.display = 'block'
+            error.innerText = '❌ ' + data.error
+            btn.disabled = false
+            btn.innerText = '🔗 GET PAIR CODE'
+            return
+        }
+
+        document.getElementById('codeBox').classList.add('active')
+        document.getElementById('pairCode').innerText = data.code
+        document.getElementById('forNumber').innerText = 'For: +' + data.number
+        btn.innerText = '✅ CODE GENERATED'
+
+    } catch (e) {
+        error.style.display = 'block'
+        error.innerText = '❌ Server error, try again'
+        btn.disabled = false
+        btn.innerText = '🔗 GET PAIR CODE'
+    }
+}
+
+function copyCode() {
+    const code = document.getElementById('pairCode').innerText
+    navigator.clipboard.writeText(code)
+    alert('✅ Code Copy ho gaya!')
+}
+</script>
+</body>
+  </html>
