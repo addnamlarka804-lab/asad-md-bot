@@ -1,0 +1,110 @@
+// ASAD-MD V7.9 BOT
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys')
+const express = require('express')
+const pino = require('pino')
+const app = express()
+app.use(express.json())
+app.use(express.static('public'))
+
+// 👇 SIRF YE 2 LINES CHANGE KARO
+global.owner = ['923227753099'] // Apna WhatsApp number 92 ke saath
+global.channelJid = '120363417094654360@newsletter' // Apna channel JID
+
+global.sudo = []
+global.channelName = '𝐀𝐒𝐀𝐃-𝐌𝐃 𝐎𝐅𝐈𝐂𝐈𝐀𝐋'
+global.botName = 'ASAD-MD'
+global.ownerName = 'Asad'
+global.botUser = null
+
+global.fakeChannel = {
+    contextInfo: {
+        forwardingScore: 999,
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+            newsletterJid: global.channelJid,
+            newsletterName: global.channelName,
+            serverMessageId: 143
+        }
+    }
+}
+
+let Asad = null
+
+async function startAsadMD() {
+    const { state, saveCreds } = await useMultiFileAuthState('./session')
+    Asad = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false,
+        auth: state,
+        browser: Browsers.macOS('Desktop'),
+        markOnlineOnConnect: true
+    })
+
+    Asad.ev.on('connection.update', async (update) => {
+        const { connection } = update
+        if (connection === 'open') {
+            console.log('✅ BOT CONNECTED')
+            if (global.botUser) {
+                await Asad.sendMessage(global.botUser + '@s.whatsapp.net', {
+                    text: `*🤖 ASAD-MD V7.9 CONNECTED* ✅\n\nType.menu to start\n\n👑 Powered By @AsadMD`,
+                   ...global.fakeChannel
+                })
+            }
+            await Asad.newsletterFollow(global.channelJid).catch(()=>{})
+        }
+        if (connection === 'close') {
+            let reason = update.lastDisconnect?.error?.output?.statusCode
+            if (reason!== DisconnectReason.loggedOut) setTimeout(() => startAsadMD(), 3000)
+        }
+    })
+
+    Asad.ev.on('creds.update', saveCreds)
+
+    Asad.ev.on('messages.upsert', async ({ messages }) => {
+        const m = messages[0]
+        if (!m.message || m.key.fromMe) return
+        const from = m.key.remoteJid
+        const sender = from.endsWith('@g.us')? m.key.participant : m.key.remoteJid
+        const senderNum = sender.split('@')[0]
+        let body = m.message.conversation || m.message.extendedTextMessage?.text || ''
+        let isCmd = body.startsWith('.')
+        let command = isCmd? body.slice(1).trim().split(' ')[0].toLowerCase() : ''
+        let isOwner = global.owner.includes(senderNum)
+
+        const reply = async (teks) => {
+            await Asad.sendMessage(from, { text: teks,...global.fakeChannel }, { quoted: m })
+        }
+
+        switch (command) {
+            case 'menu':
+                reply(`╭─❒ 𝗔𝗦𝗔𝗗-𝗠𝗗 𝗩7.9 ❒─╮\n│ 👑 𝗢𝘄𝗻𝗲𝗿 » ${global.ownerName}\n│ 🤖 𝗕𝗼𝘁 » ${global.botName}\n╰─❒ Powered By @AsadMD ❒─╯\n\n📂 Commands:\n.ping\n.ownermenu`)
+                break
+            case 'ping':
+                reply(`🏓 Pong! Bot Active ✅`)
+                break
+            case 'ownermenu':
+                if (!isOwner) return reply('❌ Owner Only')
+                reply(`👑 Owner Menu:\n.addsudo\n.chpost`)
+                break
+        }
+    })
+    return Asad
+}
+
+app.post('/pair', async (req, res) => {
+    try {
+        let { number } = req.body
+        number = number.replace(/[^0-9]/g, '')
+        if (!Asad) await startAsadMD()
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        const code = await Asad.requestPairingCode(number)
+        global.botUser = number
+        res.json({ success: true, code: code, number: number })
+    } catch (e) {
+        res.json({ error: 'Pair failed' })
+    }
+})
+
+app.get('/', (req, res) => res.sendFile(__dirname + '/public/pair.html'))
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => startAsadMD())
